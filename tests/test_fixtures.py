@@ -4,6 +4,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from collections import defaultdict
 from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
@@ -15,6 +16,8 @@ FIXTURE_DIGESTS = {
     "archive-intake/bin-031.pgm": "fb19bbe5e1d1047e8be03ac1584cd714084314d147b4d4240d6069fdcfcc7d39",
     "archive-intake/intake.json": "50364a31ada872564f8e0b23c46f0d52c729fad2dc347530ff686b6613262778",
     "tray-timeline/events.csv": "7d2ed2d8e04a350264a3ede7bb698a25ed6ac3c3f07ef87baa10a02bc4798c7e",
+    "shelf-reconciliation/register.csv": "b54fdf233c48182b2506493fee1b52ef6afff4dc43091835b7a4d3a03bc0b0a0",
+    "shelf-reconciliation/scans.jsonl": "01497217ef2896577a0be65d288afbc096929b478ea77d2b02ec90176482b501",
 }
 
 
@@ -99,6 +102,28 @@ class FixtureTests(unittest.TestCase):
         self.assertEqual(same_tray, {"E102"})
         self.assertEqual(bytes.fromhex(rows["E102"]["note_hex"]).decode("ascii"), "blue folder")
         self.assertLess(time_for("E104", "ingested_at"), time_for("E101", "ingested_at"))
+
+    def test_shelf_reconciliation_distinguishes_coverage_from_attempt_counts(self):
+        root = self.generate() / "shelf-reconciliation"
+        with (root / "register.csv").open(encoding="ascii", newline="") as source:
+            expected = {(row["cabinet"], row["slot"]) for row in csv.DictReader(source)}
+        scans = defaultdict(list)
+        for line in (root / "scans.jsonl").read_text(encoding="ascii").splitlines():
+            row = json.loads(line)
+            scans[row["cabinet"], row["slot"]].append((row["id"], row["result"]))
+        accepted = {
+            pair for pair, attempts in scans.items()
+            if any(result == "accepted" for _, result in attempts)
+        }
+
+        self.assertEqual(sum(result == "accepted" for rows in scans.values()
+                             for _, result in rows), len(expected))
+        self.assertEqual(expected - accepted, {("A", "02"), ("B", "03")})
+        self.assertEqual(accepted - expected, {("A", "03")})
+        self.assertEqual(scans["A", "03"], [("S05", "accepted")])
+        self.assertEqual(scans["A", "02"], [("S03", "unreadable")])
+        self.assertNotIn(("B", "03"), scans)
+        self.assertEqual(scans["A", "01"], [("S01", "accepted"), ("S02", "accepted")])
 
     def test_help_does_not_create_output(self):
         result = self.cli("--help")

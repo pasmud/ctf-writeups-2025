@@ -1,4 +1,4 @@
-"""Generate the fixed, synthetic evidence for the two offline labs."""
+"""Generate the fixed, synthetic evidence for the offline labs."""
 
 import argparse
 import hashlib
@@ -26,12 +26,22 @@ def _fixture_bytes() -> dict[str, bytes]:
         "626c756520666f6c646572\n"
         "E103,2025-12-10T00:00:00Z,2025-12-10T00:00:05Z,19,label_scan,\n"
     )
+    register = "cabinet,slot\nA,01\nA,02\nB,01\nB,03\n"
+    scans = (
+        '{"id":"S01","cabinet":"A","slot":"01","result":"accepted"}\n'
+        '{"id":"S02","cabinet":"A","slot":"01","result":"accepted"}\n'
+        '{"id":"S03","cabinet":"A","slot":"02","result":"unreadable"}\n'
+        '{"id":"S04","cabinet":"B","slot":"01","result":"accepted"}\n'
+        '{"id":"S05","cabinet":"A","slot":"03","result":"accepted"}\n'
+    )
     return {
         "archive-intake/bin-014.dat": b"Scanner offline: retry\n",
         "archive-intake/bin-027.txt": reference,
         "archive-intake/bin-031.pgm": header + raster[:-1] + b"\xfe",
         "archive-intake/intake.json": intake_text.encode("ascii"),
         "tray-timeline/events.csv": events.encode("ascii"),
+        "shelf-reconciliation/register.csv": register.encode("ascii"),
+        "shelf-reconciliation/scans.jsonl": scans.encode("ascii"),
     }
 
 
