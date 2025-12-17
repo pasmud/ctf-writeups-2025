@@ -51,6 +51,20 @@ The writeup commands use POSIX shell syntax and assume the default `evidence` pa
 - Successful runs produce identical relative paths and file bytes. Filesystem metadata such as modification times is outside that guarantee.
 - Usage errors exit with status `2`; filesystem errors exit with status `1` and a diagnostic on standard error. A write failure after creating the destination can leave partial output. Treat it as incomplete and retry at a new path.
 
+## Evidence integrity
+
+After generating the evidence, record a baseline before examining or copying it:
+
+```sh
+python3 manifest.py create evidence evidence-manifest.json
+python3 fixtures.py evidence-copy
+python3 manifest.py verify evidence-copy evidence-manifest.json
+```
+
+The manifest is a deterministic JSON object mapping sorted, root-relative `/`-separated file paths to lowercase SHA-256 digests. Keep it outside the evidence directory; creation requires at least one evidence file and a new manifest path, and never overwrites an existing entry. A write failure may leave an incomplete manifest; retry with a new path. Verification checks the entire regular-file inventory and reports missing, unexpected, and changed files. Empty directories and filesystem metadata are not recorded. Successful commands exit `0`, invalid CLI syntax exits `2`, and mismatches or input/filesystem errors exit `1`.
+
+Use the tool on stable local lab directories. It rejects symlinks and other non-regular entries in the evidence tree; the root itself cannot be a symlink. It doesn't protect against concurrent directory edits. Keep a trusted copy of the manifest: matching hashes show consistency with that baseline, not provenance or who handled the files.
+
 ## Verification
 
 ```sh
