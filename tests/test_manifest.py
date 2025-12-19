@@ -35,8 +35,9 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(first.read_bytes(), second.read_bytes())
 
         entries = json.loads(first.read_text(encoding="ascii"))
-        files = [p for p in (self.workspace / "evidence").glob("*/*") if p.is_file()]
-        self.assertEqual(list(entries), sorted(f"{p.parent.name}/{p.name}" for p in files))
+        root = self.workspace / "evidence"
+        files = [p for p in root.rglob("*") if p.is_file()]
+        self.assertEqual(list(entries), sorted(p.relative_to(root).as_posix() for p in files))
         self.assertEqual(entries["tray-timeline/events.csv"],
                          sha256((self.workspace / "evidence/tray-timeline/events.csv")
                                 .read_bytes()).hexdigest())

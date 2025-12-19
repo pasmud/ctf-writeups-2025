@@ -34,6 +34,7 @@ def _fixture_bytes() -> dict[str, bytes]:
         '{"id":"S04","cabinet":"B","slot":"01","result":"accepted"}\n'
         '{"id":"S05","cabinet":"A","slot":"03","result":"accepted"}\n'
     )
+    reading = b"drawer=07\nlabel=blue folder\n"
     return {
         "archive-intake/bin-014.dat": b"Scanner offline: retry\n",
         "archive-intake/bin-027.txt": reference,
@@ -42,6 +43,10 @@ def _fixture_bytes() -> dict[str, bytes]:
         "tray-timeline/events.csv": events.encode("ascii"),
         "shelf-reconciliation/register.csv": register.encode("ascii"),
         "shelf-reconciliation/scans.jsonl": scans.encode("ascii"),
+        "copy-comparison/delivery/reading.txt": reading,
+        "copy-comparison/review/reading.txt": reading.replace(b"\n", b"\r\n"),
+        "copy-comparison/staging/reading.txt": reading.replace(b"blue", b"gray"),
+        "copy-comparison/staging/renamed.log": reading,
     }
 
 
@@ -51,7 +56,7 @@ def generate(destination: Path) -> None:
     destination.mkdir()
     for relative_path, data in fixtures.items():
         target = destination / relative_path
-        target.parent.mkdir(exist_ok=True)
+        target.parent.mkdir(parents=True, exist_ok=True)
         with target.open("xb") as output:
             output.write(data)
 

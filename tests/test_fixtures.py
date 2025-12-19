@@ -18,6 +18,10 @@ FIXTURE_DIGESTS = {
     "tray-timeline/events.csv": "7d2ed2d8e04a350264a3ede7bb698a25ed6ac3c3f07ef87baa10a02bc4798c7e",
     "shelf-reconciliation/register.csv": "b54fdf233c48182b2506493fee1b52ef6afff4dc43091835b7a4d3a03bc0b0a0",
     "shelf-reconciliation/scans.jsonl": "01497217ef2896577a0be65d288afbc096929b478ea77d2b02ec90176482b501",
+    "copy-comparison/delivery/reading.txt": "e1b302367c14995944cc3a11b10a29e7337beb69ff2c24fa30a0062a9ad26725",
+    "copy-comparison/review/reading.txt": "cb2d162957e2532168865bbdef7c11fc9ae073586618d5b1d50d16b46d06369a",
+    "copy-comparison/staging/reading.txt": "da28f7571ed98e607afcc0b95431a3ba1f3077b700b98415ae682bda736c0386",
+    "copy-comparison/staging/renamed.log": "e1b302367c14995944cc3a11b10a29e7337beb69ff2c24fa30a0062a9ad26725",
 }
 
 
@@ -124,6 +128,21 @@ class FixtureTests(unittest.TestCase):
         self.assertEqual(scans["A", "02"], [("S03", "unreadable")])
         self.assertNotIn(("B", "03"), scans)
         self.assertEqual(scans["A", "01"], [("S01", "accepted"), ("S02", "accepted")])
+
+    def test_copy_comparison_preserves_line_endings_and_distinguishes_content(self):
+        root = self.generate() / "copy-comparison"
+        reference = (root / "delivery/reading.txt").read_bytes()
+        review = (root / "review/reading.txt").read_bytes()
+        renamed = (root / "staging/renamed.log").read_bytes()
+        different = (root / "staging/reading.txt").read_bytes()
+
+        self.assertEqual(renamed, reference)
+        self.assertNotEqual(review, reference)
+        self.assertEqual(review.replace(b"\r\n", b"\n"), reference)
+        self.assertEqual(len(different), len(reference))
+        self.assertNotEqual(different.replace(b"\r\n", b"\n"), reference)
+        self.assertEqual(reference.splitlines(), [b"drawer=07", b"label=blue folder"])
+        self.assertEqual(different.splitlines(), [b"drawer=07", b"label=gray folder"])
 
     def test_help_does_not_create_output(self):
         result = self.cli("--help")

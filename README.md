@@ -1,6 +1,6 @@
 # CTF Writeups 2025 · Offline Forensics
 
-Three original CTF-style forensics labs built around a fictional archive. Each has a short brief, deterministic evidence, and a worked solution you can reproduce using Python's standard library. Start with the briefs if you want to solve them yourself: the writeups and fixture source contain spoilers.
+Four original CTF-style forensics labs built around a fictional archive. Each has a short brief, deterministic evidence, and a worked solution you can reproduce using Python's standard library. Start with the briefs if you want to solve them yourself: the writeups and fixture source contain spoilers.
 
 These are synthetic portfolio exercises, not records of competition participation. The December 2025 commit timeline is illustrative and does not document activity on those dates.
 
@@ -22,6 +22,12 @@ evidence/
 │   ├── bin-027.txt
 │   ├── bin-031.pgm
 │   └── intake.json
+├── copy-comparison/
+│   ├── delivery/reading.txt
+│   ├── review/reading.txt
+│   └── staging/
+│       ├── reading.txt
+│       └── renamed.log
 ├── shelf-reconciliation/
 │   ├── register.csv
 │   └── scans.jsonl
@@ -42,6 +48,7 @@ This prints `b'P5\n'`. That identifies a likely format, but it's only a first cl
 | **01 · Archive intake** | Which of three equally sized files matches the reference, and what format is it really? | [Brief](labs/01-archive-intake.md) · [Writeup](writeups/01-archive-intake.md) |
 | **02 · Tray timeline** | Which event falls strictly inside the recorded open interval? What do the log and its hex note actually establish? | [Brief](labs/02-tray-timeline.md) · [Writeup](writeups/02-tray-timeline.md) |
 | **03 · Shelf reconciliation** | Which expected locations lack an accepted scan, and which scan records should be reviewed? | [Brief](labs/03-shelf-reconciliation.md) · [Writeup](writeups/03-shelf-reconciliation.md) |
+| **04 · Copy comparison** | Which exports are exact copies, which only differ in line endings, and which disagree on content? | [Brief](labs/04-copy-comparison.md) · [Writeup](writeups/04-copy-comparison.md) |
 
 The writeup commands use POSIX shell syntax and assume the default `evidence` path. No packages, network access, or external data are required.
 
