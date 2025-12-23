@@ -52,9 +52,18 @@ This prints `b'P5\n'`. That identifies a likely format, but it's only a first cl
 
 The writeup commands use POSIX shell syntax and assume the default `evidence` path. No packages, network access, or external data are required.
 
+## Choose one lab
+
+```sh
+python3 fixtures.py --list
+python3 fixtures.py --lab 03 evidence
+```
+
+`--list` takes no destination and writes nothing to disk. Each output line gives the stable two-digit lab ID, title, and brief path relative to the repository, separated by tabs. `--lab ID` writes only that lab's evidence, with the same paths and bytes as in a full run; the example creates just `evidence/shelf-reconciliation/`. The choice is optional: `python3 fixtures.py evidence` still generates every lab.
+
 ## Generator contract
 
-- `python3 fixtures.py DESTINATION` accepts one output path. Its parent must already exist. Pick a **new** path for a rerun; the generator never overwrites an existing destination, including an empty directory or symlink.
+- Generation accepts one output path. Its parent must already exist. Pick a **new** path for a rerun; the generator never overwrites an existing destination, including an empty directory or symlink.
 - Successful runs produce identical relative paths and file bytes. Filesystem metadata such as modification times is outside that guarantee.
 - Usage errors exit with status `2`; filesystem errors exit with status `1` and a diagnostic on standard error. A write failure after creating the destination can leave partial output. Treat it as incomplete and retry at a new path.
 

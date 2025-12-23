@@ -150,8 +150,41 @@ class FixtureTests(unittest.TestCase):
         self.assertIn("destination", result.stdout)
         self.assertEqual(list(self.workspace.iterdir()), [])
 
+    def test_catalog_lists_stable_ids_and_existing_briefs_without_writing(self):
+        result = self.cli("--list")
+        self.assertEqual((result.returncode, result.stderr), (0, ""))
+        rows = [line.split("\t") for line in result.stdout.splitlines()]
+        self.assertEqual([row[0] for row in rows], ["01", "02", "03", "04"])
+        self.assertEqual({row[2] for row in rows}, {
+            path.relative_to(SCRIPT.parent).as_posix()
+            for path in (SCRIPT.parent / "labs").glob("*.md")
+        })
+        for lab_id, title, brief in rows:
+            heading = (SCRIPT.parent / brief).read_text(encoding="utf-8").splitlines()[0]
+            self.assertEqual(heading, f"# {lab_id} · {title}")
+        self.assertEqual(list(self.workspace.iterdir()), [])
+
+    def test_each_selected_lab_is_an_exact_subset_of_full_output(self):
+        full = snapshot(self.generate())
+        for lab_id, slug in (
+            ("01", "archive-intake"), ("02", "tray-timeline"),
+            ("03", "shelf-reconciliation"), ("04", "copy-comparison"),
+        ):
+            with self.subTest(lab_id=lab_id):
+                name = f"lab-{lab_id}"
+                result = self.cli("--lab", lab_id, name)
+                self.assertEqual((result.returncode, result.stderr), (0, ""))
+                selected = self.workspace / name
+                self.assertEqual([path.name for path in selected.iterdir()], [slug])
+                self.assertEqual(snapshot(selected), {
+                    path: data for path, data in full.items() if path.startswith(f"{slug}/")
+                })
+
     def test_invalid_arguments_do_not_create_output(self):
-        for args in ((), ("output", "extra"), ("--unknown", "output")):
+        for args in (
+            (), ("output", "extra"), ("--unknown", "output"), ("--lab", "03"),
+            ("--lab", "999", "output"), ("--list", "output"), ("--list", "--lab", "03"),
+        ):
             with self.subTest(args=args):
                 result = self.cli(*args)
                 self.assertEqual(result.returncode, 2)

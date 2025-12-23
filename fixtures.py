@@ -6,6 +6,13 @@ import json
 import sys
 from pathlib import Path
 
+LABS = {
+    "01": ("archive-intake", "Archive intake"),
+    "02": ("tray-timeline", "Tray timeline"),
+    "03": ("shelf-reconciliation", "Shelf reconciliation"),
+    "04": ("copy-comparison", "Copy comparison"),
+}
+
 
 def _fixture_bytes() -> dict[str, bytes]:
     header = b"P5\n4 3\n255\n"
@@ -50,9 +57,16 @@ def _fixture_bytes() -> dict[str, bytes]:
     }
 
 
-def generate(destination: Path) -> None:
-    """Write evidence to a new directory whose parent already exists."""
+def generate(destination: Path, *, lab_id: str | None = None) -> None:
+    """Write all evidence, or one lab by stable ID, to a new directory."""
     fixtures = _fixture_bytes()
+    if lab_id is not None:
+        if lab_id not in LABS:
+            raise ValueError(f"unknown lab ID: {lab_id!r}")
+        slug, _ = LABS[lab_id]
+        fixtures = {
+            name: data for name, data in fixtures.items() if name.startswith(f"{slug}/")
+        }
     destination.mkdir()
     for relative_path, data in fixtures.items():
         target = destination / relative_path
@@ -63,10 +77,21 @@ def generate(destination: Path) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("destination", type=Path, help="new directory; its parent must exist")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--list", action="store_true", help="list available labs without writing")
+    mode.add_argument("--lab", choices=LABS.keys(), metavar="ID", help="generate only this lab ID")
+    parser.add_argument("destination", type=Path, nargs="?", help="new directory; its parent must exist")
     args = parser.parse_args()
+    if args.list:
+        if args.destination is not None:
+            parser.error("--list does not take a destination")
+        for lab_id, (slug, title) in sorted(LABS.items()):
+            print(f"{lab_id}\t{title}\tlabs/{lab_id}-{slug}.md")
+        return 0
+    if args.destination is None:
+        parser.error("a destination is required to generate fixtures")
     try:
-        generate(args.destination)
+        generate(args.destination, lab_id=args.lab)
     except OSError as error:
         print(f"fixtures: could not generate output: {error}", file=sys.stderr)
         return 1
