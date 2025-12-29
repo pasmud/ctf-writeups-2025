@@ -81,6 +81,8 @@ The manifest is a deterministic JSON object mapping sorted, root-relative `/`-se
 
 Use the tool on stable local lab directories. It rejects symlinks and other non-regular entries in the evidence tree; the root itself cannot be a symlink. It doesn't protect against concurrent directory edits. Keep a trusted copy of the manifest: matching hashes show consistency with that baseline, not provenance or who handled the files.
 
+The [student-to-reviewer handoff example](examples/03-shelf-handoff.md) shows how to package a lab report with its evidence and verify the received copy before reproducing the findings. It contains Lab 03 spoilers.
+
 ## Verification
 
 ```sh
